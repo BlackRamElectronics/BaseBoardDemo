@@ -17,6 +17,7 @@ void main()
 	uint32_t timer_mark;
 	uint16_t adc_res0, adc_res1;
 	uint8_t button_active = 0;
+	uint32_t pwm1, pwm2;
 	
 	// Configure the peripherals
 	HardwareInit();
@@ -30,6 +31,23 @@ void main()
 	// Send welcome message to console
 	printf("<==== Black Ram Demo ====>\r\n");
 	
+	/*for(;;)
+	{
+		timer_mark = msTicks;				// Take timer snapshot 
+		while(msTicks < (timer_mark + 100));	// Wait until 10ms has passed
+		
+		
+		adc_res0 = ADC_ChannelGetData(LPC_ADC, 0);
+		adc_res1 = ADC_ChannelGetData(LPC_ADC, 1);
+		
+		pwm1 = ((25000/4096) * adc_res0) + 25000;
+		pwm2 = ((25000/4096) * adc_res1) + 25000;
+		
+		PWM_MatchUpdate(LPC_PWM1, 3, pwm1, PWM_MATCH_UPDATE_NOW);
+		PWM_MatchUpdate(LPC_PWM1, 4, pwm2, PWM_MATCH_UPDATE_NOW);
+	}*/
+	
+	
 	// Loop forever processing inputs
 	for(;;)
 	{
@@ -40,6 +58,18 @@ void main()
 		adc_res1 = ADC_ChannelGetData(LPC_ADC, 1);
 		printf("ADC0: %d,\tADC1: %d\r\n", adc_res0, adc_res1);
 		
+		/*pwm1 = ((25000/4096) * adc_res0) + 25000;
+		pwm2 = ((25000/4096) * adc_res1) + 25000;
+		PWM_MatchUpdate(LPC_PWM1, 3, ((25000/4096) * adc_res0) + 25000, PWM_MATCH_UPDATE_NOW);
+		*/
+		
+		printf("PWM1: %d,\tPWM2: %d\r\n", pwm1, pwm2);
+		
+		pwm1 = ((25000/4096) * adc_res0) + 25000;
+		pwm2 = ((25000/4096) * adc_res1) + 25000;
+		
+		PWM_MatchUpdate(LPC_PWM1, 3, pwm1, PWM_MATCH_UPDATE_NOW);
+		PWM_MatchUpdate(LPC_PWM1, 4, pwm2, PWM_MATCH_UPDATE_NOW);
 		
 		// If a button has been pressed send to serial console
 		if(IO_GetSW())
@@ -125,7 +155,7 @@ void HardwareInit(void)
 	PINSEL_ConfigPin(&pinsel_config);
 	
 	// Set match value for PWM match channel 0 = 256, update immediately
-	PWM_MatchUpdate(LPC_PWM1, 0, 256, PWM_MATCH_UPDATE_NOW);
+	PWM_MatchUpdate(LPC_PWM1, 0, 500000, PWM_MATCH_UPDATE_NOW);
 	
 	pwm_match_config.IntOnMatch = DISABLE;
 	pwm_match_config.MatchChannel = 0;
@@ -137,15 +167,26 @@ void HardwareInit(void)
 	PWM_ChannelConfig(LPC_PWM1, 3, PWM_CHANNEL_SINGLE_EDGE);
 	
 	// Set up match value
-	PWM_MatchUpdate(LPC_PWM1, 2, 10, PWM_MATCH_UPDATE_NOW);
+	PWM_MatchUpdate(LPC_PWM1, 3, 37500, PWM_MATCH_UPDATE_NOW);
 	// Configure match option
 	pwm_match_config.IntOnMatch = DISABLE;
-	pwm_match_config.MatchChannel = 2;
+	pwm_match_config.MatchChannel = 3;
 	pwm_match_config.ResetOnMatch = DISABLE;
 	pwm_match_config.StopOnMatch = DISABLE;
 	PWM_ConfigMatch(LPC_PWM1, &pwm_match_config);
+	
+	// Set up match value
+	PWM_MatchUpdate(LPC_PWM1, 4, 37500, PWM_MATCH_UPDATE_NOW);
+	// Configure match option
+	pwm_match_config.IntOnMatch = DISABLE;
+	pwm_match_config.MatchChannel = 4;
+	pwm_match_config.ResetOnMatch = DISABLE;
+	pwm_match_config.StopOnMatch = DISABLE;
+	PWM_ConfigMatch(LPC_PWM1, &pwm_match_config);
+	
 	// Enable PWM Channel Output
-	PWM_ChannelCmd(LPC_PWM1, 2, ENABLE);
+	PWM_ChannelCmd(LPC_PWM1, 3, ENABLE);
+	PWM_ChannelCmd(LPC_PWM1, 4, ENABLE);
 	
 	// Reset and Start counter
 	PWM_ResetCounter(LPC_PWM1);
@@ -192,4 +233,22 @@ void SysTick_Handler(void)
 {
 	msTicks++;
 }
+
+//#ifdef  DEBUG
+/*******************************************************************************
+* @brief		Reports the name of the source file and the source line number
+* 				where the CHECK_PARAM error has occurred.
+* @param[in]	file Pointer to the source file name
+* @param[in]    line assert_param error line source number
+* @return		None
+*******************************************************************************/
+void check_failed(uint8_t *file, uint32_t line)
+{
+	/* User can add his own implementation to report the file name and line number,
+	 ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+	/* Infinite loop */
+	while(1);
+}
+//#endif
 
